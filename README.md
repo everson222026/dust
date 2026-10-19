@@ -1,56 +1,99 @@
-# Welcome to your Expo app 👋
+# DUST — Museu do Inusitado
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Uma rede social em forma de museu: publique coisas estranhas, inúteis ou
+esquecidas, conte suas histórias e descubra as peças da comunidade. O app usa
+Expo/React Native e funciona na web, iOS e Android.
 
-## Get started
+## O que já está pronto
 
-1. Install dependencies
+- Cadastro e login por e-mail, com sessão persistente e confirmação por e-mail.
+- Acervo pesquisável por texto e categoria; busca de visitantes.
+- Perfis públicos, seguidores, feed de quem você segue e edição do próprio perfil.
+- Publicações com descrição, categoria, imagem e história; curtidas, comentários
+  e itens salvos.
+- Fotos escolhidas diretamente da biblioteca do dispositivo, sem campo de link.
+- Atividades para novos seguidores, curtidas, comentários e peças publicadas.
+- Visita de demonstração sem cadastro, com interações salvas localmente no
+  dispositivo quando o Supabase não está configurado.
+- Interface adaptável a celular e desktop, com a identidade visual do DUST.
+- Navegação inferior persistente nas telas sociais e cartões de publicação
+  redesenhados para uma experiência de feed mais familiar.
+- Supabase com políticas de segurança por linha (RLS) e hospedagem web configurada
+  para Vercel.
 
-   ```bash
-   npm install
+## Configurar o Supabase
+
+1. Crie um projeto no [Supabase](https://supabase.com/dashboard).
+2. No **SQL Editor** do projeto, execute o conteúdo de
+   [`supabase/migrations/20261014000000_initial_schema.sql`](./supabase/migrations/20261014000000_initial_schema.sql).
+   Isso cria tabelas, relações, notificações e políticas RLS.
+3. Copie a URL do projeto e a chave **Publishable** da página **Connect**.
+   A chave publishable é própria para apps cliente; nunca use nem publique a
+   chave `service_role`.
+4. Na raiz do projeto, crie `.env` a partir do modelo:
+
+   ```powershell
+   Copy-Item .env.example .env
    ```
 
-2. Start the app
+5. Preencha `.env`:
 
-   ```bash
-   npx expo start
+   ```dotenv
+   EXPO_PUBLIC_SUPABASE_URL=https://seu-projeto.supabase.co
+   EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sua-chave-publishable
    ```
 
-In the output, you'll find options to open the app in a
+   Essas variáveis são incorporadas ao app web e mobile. A segurança dos dados
+   vem das políticas RLS da migração, não de esconder a chave publishable.
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+Contas locais antigas não são migradas: por segurança, senhas não são copiadas
+do armazenamento local. Cada visitante deverá criar uma conta nova no Supabase.
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## Executar localmente
 
-## Get a fresh project
+Requisitos: Node.js compatível com o Expo SDK 57 e npm.
 
-When you're ready, run:
-
-```bash
-npm run reset-project
+```powershell
+npm ci
+npx expo start
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Para testar a versão web de produção localmente:
 
-### Other setup steps
+```powershell
+npm run build:web
+npx expo serve
+```
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+Os comandos `npm run lint` e `npm run typecheck` verificam estilo e TypeScript.
 
-## Learn more
+## Publicar na Vercel
 
-To learn more about developing your project with Expo, look at the following resources:
+1. Importe este repositório na [Vercel](https://vercel.com/new). O arquivo
+   `vercel.json` configura o build de produção, a pasta `dist` e o fallback
+   das rotas do Expo Router. O build falha de propósito se as variáveis do
+   Supabase não estiverem configuradas.
+2. Em **Settings → Environment Variables**, adicione
+   `EXPO_PUBLIC_SUPABASE_URL` e `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` para
+   Production, Preview e Development, conforme necessário.
+3. Faça o deploy pelo painel ou, com a Vercel CLI autenticada, execute:
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+   ```powershell
+   npm run deploy:web
+   ```
 
-## Join the community
+4. No Supabase, ajuste **Authentication → URL Configuration**: defina a URL
+   publicada como **Site URL** e inclua também as URLs locais e de preview
+   necessárias em **Redirect URLs** para que as confirmações de cadastro
+   retornem ao app.
 
-Join our community of developers creating universal apps.
+Para alterar apenas a hospedagem, gere os arquivos estáticos com
+`npm run build:web` e publique a pasta `dist` em qualquer host estático com
+fallback de rota para `/`.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## Aplicativo iOS e Android
+
+O mesmo projeto pode ser executado pelo Expo Go durante o desenvolvimento. Para
+distribuição, configure uma conta Expo/EAS e gere builds com o perfil escolhido.
+Nunca crie nem edite manualmente `ios/` ou `android/`; este projeto usa
+Continuous Native Generation.
